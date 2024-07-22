@@ -16,9 +16,16 @@ const handleListen = () => console.log('Listening on http://localhost:3000')
 const server = http.createServer(app);
 const wss = new WebSocket.Server({server});
 
-function handleConnection(socket) {
-    console.log(socket);
-}
-wss.on("connection", handleConnection);
+wss.on("connection", (socket) => {
+    console.log("Connected to Browser");
+    socket.on("close", () => console.log("Disconnected from the Browser"));
+    
+    // 브라우저가 서버에 메세지를 보냈을 때를 위한 listener 등록
+    socket.on("message", message => {
+        console.log(message);
+    });
+    
+    socket.send("hello");
+});
 
 server.listen(3000, handleListen);
