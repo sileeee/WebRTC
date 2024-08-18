@@ -20,15 +20,20 @@ const sockets = [];
 
 wss.on("connection", (socket) => {
     sockets.push(socket);
+    socket["nickname"] = "Anon";
     console.log("Connected to Browser");
     socket.on("close", () => console.log("Disconnected from the Browser"));
     
     // 브라우저가 서버에 메세지를 보냈을 때를 위한 listener 등록
-    socket.on("message", (message) => {
-        sockets.forEach((aSocket) => aSocket.send(message));
+    socket.on("message", (msg) => {
+        const message = JSON.parse(msg);
+        switch(message.type){
+            case "new_message":
+                sockets.forEach((aSocket) => aSocket.send(`${socket.nickname}: ${message.payload}`));
+            case "nickname":
+                socket["nickname"] = message.payload;
+        }
     });
-
-    socket.send("hello");
 });
 
 server.listen(3000, handleListen);
