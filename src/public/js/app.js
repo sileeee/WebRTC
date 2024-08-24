@@ -19,7 +19,7 @@ function handleMessageSubmit(event) {
   event.preventDefault();
   const input = room.querySelector("input");
   const value = input.value;
-  socket.emit("new_message", input.value, roomName, () => {
+  socket.emit("send_message", input.value, roomName, () => {
     addMessage(`You: ${value}`);
   });
   input.value = "";
@@ -52,4 +52,4 @@ socket.on("bye", () => {
   addMessage("someone left ㅠㅠ");
 });
 
-socket.on("new_message", addMessage);
+socket.on("new_message", addMessage); // 이게 있어야 다른 유저로부터 메세지를 받을 수 있음
