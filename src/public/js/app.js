@@ -3,6 +3,7 @@ const socket = io();
 const welcome = document.getElementById("welcome");
 const form = welcome.querySelector("form");
 const room = document.getElementById("room");
+const nickname = document.getElementById("nickname");
 
 room.hidden = true;
 
@@ -17,7 +18,7 @@ function addMessage(message) {
 
 function handleMessageSubmit(event) {
   event.preventDefault();
-  const input = room.querySelector("input");
+  const input = room.querySelector("#msg input");
   const value = input.value;
   socket.emit("send_message", input.value, roomName, () => {
     addMessage(`You: ${value}`);
@@ -27,11 +28,12 @@ function handleMessageSubmit(event) {
 
 function showRoom() {
   welcome.hidden = true;
+  nickname.hidden = true;
   room.hidden = false;
   const h3 = room.querySelector("h3");
   h3.innerText = `Room ${roomName}`;
-  const form = room.querySelector("form");
-  form.addEventListener("submit", handleMessageSubmit);
+  const msgForm = room.querySelector("#msg");
+  msgForm.addEventListener("submit", handleMessageSubmit);
 }
 
 function handleRoomSubmit(event) {
@@ -42,14 +44,21 @@ function handleRoomSubmit(event) {
   input.value = "";
 }
 
-form.addEventListener("submit", handleRoomSubmit);
+function handleNicknameSubmit(event){
+  event.preventDefault();
+  const input = nickname.querySelector("input");
+  socket.emit("nickname", input.value);
+}
 
-socket.on("welcome", () => {
-  addMessage("someone joined!");
+form.addEventListener("submit", handleRoomSubmit);
+nickname.addEventListener("submit", handleNicknameSubmit)
+
+socket.on("welcome", (user) => {
+  addMessage(`${user} arrived!`);
 });
 
-socket.on("bye", () => {
-  addMessage("someone left ㅠㅠ");
+socket.on("bye", (left) => {
+  addMessage(`${left} left ㅠㅠ`);
 });
 
 socket.on("new_message", addMessage); // 이게 있어야 다른 유저로부터 메세지를 받을 수 있음
