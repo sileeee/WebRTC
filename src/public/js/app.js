@@ -61,4 +61,14 @@ socket.on("bye", (left) => {
   addMessage(`${left} left ㅠㅠ`);
 });
 
+socket.on("room_change", (rooms) => {
+  const roomList = welcome.querySelector("ul");
+  roomList.innerHTML = "";
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomList.appendChild(li);
+  })
+})
+
 socket.on("new_message", addMessage); // 이게 있어야 다른 유저로부터 메세지를 받을 수 있음
