@@ -4,10 +4,48 @@ const welcome = document.getElementById("welcome");
 const form = welcome.querySelector("form");
 const room = document.getElementById("room");
 const nickname = document.getElementById("nickname");
+const myFace = document.getElementById("myFace");
+const muteBtn = document.getElementById("mute");
+const cameraBtn = document.getElementById("camera");
 
 room.hidden = true;
 
 let roomName;
+let myStream;
+let muted = false;
+let cameraOff = false;
+
+async function getMedia() {
+  try {
+    myStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true,
+    });
+    myFace.srcObject = myStream;
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+function handleMuteClick() {
+  if (!muted) {
+    muteBtn.innerText = "Unmute";
+    muted = true;
+  } else {
+    muteBtn.innerText = "Mute";
+    muted = false;
+  }
+}
+
+function handleCameraClick() {
+  if (cameraOff) {
+    cameraBtn.innerText = "Turn Camera Off";
+    cameraOff = false;
+  } else {
+    cameraBtn.innerText = "Turn Camera On";
+    cameraOff = true;
+  }
+}
 
 function addMessage(message) {
   const ul = room.querySelector("ul");
@@ -30,6 +68,7 @@ function showRoom() {
   welcome.hidden = true;
   nickname.hidden = true;
   room.hidden = false;
+  getMedia();
   const h3 = room.querySelector("h3");
   h3.innerText = `Room ${roomName}`;
   const msgForm = room.querySelector("#msg");
@@ -76,3 +115,5 @@ socket.on("room_change", (rooms) => {
 });
 
 socket.on("new_message", addMessage); // 이게 있어야 다른 유저로부터 메세지를 받을 수 있음
+muteBtn.addEventListener("click", handleMuteClick);
+cameraBtn.addEventListener("click", handleCameraClick);
