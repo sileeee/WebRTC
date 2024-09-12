@@ -10,6 +10,10 @@ const cameraBtn = document.getElementById("camera");
 const camerasSelect = document.getElementById("cameras");
 
 room.hidden = true;
+muteBtn.hidden = true;
+myFace.hidden = true;
+cameraBtn.hidden = true;
+camerasSelect.hidden = true;
 
 let roomName;
 let myStream;
@@ -20,10 +24,14 @@ async function getCameras() {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
     const cameras = devices.filter((device) => device.kind === "videoinput");
+    const currentCamera = myStream.getVideoTracks()[0];
     cameras.forEach((camera) => {
       const option = document.createElement("option");
       option.value = camera.deviceId;
       option.innerText = camera.label;
+      if (currentCamera.label === camera.label) {
+        option.selected = true;
+      }
       camerasSelect.appendChild(option);
     });
   } catch (e) {
@@ -31,14 +39,23 @@ async function getCameras() {
   }
 }
 
-async function getMedia() {
+async function getMedia(deviceId) {
+  const initialConstrains = {
+    audio: true,
+    video: { facingMode: "user" },
+  };
+  const cameraConstraints = {
+    audio: true,
+    video: { deviceId: { exact: deviceId } },
+  };
   try {
-    myStream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: true,
-    });
+    myStream = await navigator.mediaDevices.getUserMedia(
+      deviceId ? cameraConstraints : initialConstrains
+    );
     myFace.srcObject = myStream;
-    await getCameras();
+    if (!deviceId) {
+      await getCameras();
+    }
   } catch (e) {
     console.log(e);
   }
@@ -70,6 +87,10 @@ function handleCameraClick() {
   }
 }
 
+async function handleCameraChange() {
+  await getMedia(camerasSelect.value);
+}
+
 function addMessage(message) {
   const ul = room.querySelector("ul");
   const li = document.createElement("li");
@@ -91,6 +112,11 @@ function showRoom() {
   welcome.hidden = true;
   nickname.hidden = true;
   room.hidden = false;
+  muteBtn.hidden = false;
+  myFace.hidden = false;
+  cameraBtn.hidden = false;
+  camerasSelect.hidden = false;
+
   getMedia();
   const h3 = room.querySelector("h3");
   h3.innerText = `Room ${roomName}`;
@@ -140,3 +166,4 @@ socket.on("room_change", (rooms) => {
 socket.on("new_message", addMessage); // 이게 있어야 다른 유저로부터 메세지를 받을 수 있음
 muteBtn.addEventListener("click", handleMuteClick);
 cameraBtn.addEventListener("click", handleCameraClick);
+camerasSelect.addEventListener("input", handleCameraChange);
