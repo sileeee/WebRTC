@@ -19,6 +19,7 @@ let roomName;
 let myStream;
 let muted = false;
 let cameraOff = false;
+let myPeerConnection;
 
 async function getCameras() {
   try {
@@ -89,6 +90,7 @@ function handleCameraClick() {
 
 async function handleCameraChange() {
   await getMedia(camerasSelect.value);
+  makeConnection();
 }
 
 function addMessage(message) {
@@ -141,11 +143,21 @@ function handleNicknameSubmit(event){
 form.addEventListener("submit", handleRoomSubmit);
 nickname.addEventListener("submit", handleNicknameSubmit)
 
-socket.on("welcome", (user, newCount) => {
+// PeerA
+socket.on("welcome", async(user, newCount) => {
   const h3 = room.querySelector("h3");
   h3.innerText = `Room ${roomName} (${newCount})`;
   addMessage(`${user} arrived!`);
+
+  const offer = await myPeerConnection.createOffer();
+  myPeerConnection.setLocalDescription(offer);
+  socket.emit("offer", offer, roomName);
 });
+
+// PeerB
+socket.on("offer", (offer) => {
+  console.log(offer);
+})
 
 socket.on("bye", (left, newCount) => {
   const h3 = room.querySelector("h3");
@@ -167,3 +179,13 @@ socket.on("new_message", addMessage); // 이게 있어야 다른 유저로부터
 muteBtn.addEventListener("click", handleMuteClick);
 cameraBtn.addEventListener("click", handleCameraClick);
 camerasSelect.addEventListener("input", handleCameraChange);
+
+// RTC Code
+
+function makeConnection(){
+  const myPeerConnection = new RTCPeerConnection();
+  console.log(myStream.getTracks());
+  myStream
+    .getTracks()
+    .forEach(track => myPeerConnection.addTrack(track, myStream));
+}
