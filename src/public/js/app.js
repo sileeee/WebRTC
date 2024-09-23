@@ -90,7 +90,6 @@ function handleCameraClick() {
 
 async function handleCameraChange() {
   await getMedia(camerasSelect.value);
-  makeConnection();
 }
 
 function addMessage(message) {
@@ -110,25 +109,31 @@ function handleMessageSubmit(event) {
   input.value = "";
 }
 
-function showRoom() {
-  welcome.hidden = true;
-  nickname.hidden = true;
+async function initCall(){
   room.hidden = false;
   muteBtn.hidden = false;
   myFace.hidden = false;
   cameraBtn.hidden = false;
   camerasSelect.hidden = false;
 
-  getMedia();
+  await getMedia();
+  makeConnection();
+}
+
+function showRoom() {
+  welcome.hidden = true;
+  nickname.hidden = true;
+
   const h3 = room.querySelector("h3");
   h3.innerText = `Room ${roomName}`;
   const msgForm = room.querySelector("#msg");
   msgForm.addEventListener("submit", handleMessageSubmit);
 }
 
-function handleRoomSubmit(event) {
+async function handleRoomSubmit(event) {
   event.preventDefault();
   const input = form.querySelector("input");
+  await initCall();
   socket.emit("enter_room", input.value, showRoom);
   roomName = input.value;
   input.value = "";
@@ -153,10 +158,16 @@ socket.on("welcome", async(user, newCount) => {
   myPeerConnection.setLocalDescription(offer);
   socket.emit("offer", offer, roomName);
 });
+socket.on("answer", answer => {
+  myPeerConnection.setRemoteDescription(answer);
+})
 
 // PeerB
-socket.on("offer", (offer) => {
-  console.log(offer);
+socket.on("offer", async(offer) => {
+  myPeerConnection.setRemoteDescription(offer);
+  const answer = await myPeerConnection.createAnswer();
+  myPeerConnection.setLocalDescription(answer);
+  socket.emit("answer", answer, roomName);
 })
 
 socket.on("bye", (left, newCount) => {
