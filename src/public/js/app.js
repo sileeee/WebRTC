@@ -161,6 +161,9 @@ socket.on("welcome", async(user, newCount) => {
 socket.on("answer", answer => {
   myPeerConnection.setRemoteDescription(answer);
 })
+socket.on("ice", ice => {
+  myPeerConnection.addIceCandidate(ice);
+})
 
 // PeerB
 socket.on("offer", async(offer) => {
@@ -194,9 +197,20 @@ camerasSelect.addEventListener("input", handleCameraChange);
 // RTC Code
 
 function makeConnection(){
-  const myPeerConnection = new RTCPeerConnection();
+  myPeerConnection = new RTCPeerConnection();
+  myPeerConnection.addEventListener("icecandidate", handleIce);
+  myPeerConnection.addEventListener("addstream", handleAddStream);
   console.log(myStream.getTracks());
   myStream
     .getTracks()
     .forEach(track => myPeerConnection.addTrack(track, myStream));
+}
+
+function handleIce(data){
+  socket.emit("ice", data.candidate, roomName);
+}
+
+function handleAddStream(data){
+  const peerFace = document.getElementById("peerFace");
+  peerFace.srcObject = data.stream;
 }
